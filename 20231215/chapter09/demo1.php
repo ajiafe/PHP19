@@ -3,28 +3,64 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>文件上传</title>
+    <title>文件上传和超全局变量 $_FILES</title>
 </head>
 <body>
 
 <?php
+// $_FILES php 超全局变量 这个是一个二维数组
+printf('<pre>%s</pre>', print_r($_FILES, true));
+/**
+ * Array
+(
+    [fileToUpload] => Array
+        (
+            [name] => img-green.png
+            [type] => image/png
+            [tmp_name] => /Applications/MAMP/tmp/php/phpdXGzRe
+            [error] => 0
+            [size] => 31555
+        )
+
+)
+ * 每个图片都是一个数组 包含了 名字 类型 php服务器临时目录 错误状态码 文件大小
+ */
+// printf('<pre>%s</pre>',print_r($_SERVER,true));
 // 处理文件上传
+/**
+ * 上传的文件必须是post请求
+ * 保证文件必须存在
+ */
 if ($_SERVER["REQUEST_METHOD"] == "POST" && isset($_FILES["fileToUpload"])) {
     $targetDir = "uploads/"; // 上传目录
     $targetFile = $targetDir . basename($_FILES["fileToUpload"]["name"]);
     $uploadOk = 1;
+    // 把字符串全部变成小写格式 获取文件的扩展名PATHINFO_EXTENSION
     $imageFileType = strtolower(pathinfo($targetFile, PATHINFO_EXTENSION));
 
-    // 检查文件是否为图像
-    if (isset($_POST["submit"])) {
-        $check = getimagesize($_FILES["fileToUpload"]["tmp_name"]);
-        if ($check !== false) {
-            echo "文件是一个图像 - " . $check["mime"] . ".";
-            $uploadOk = 1;
-        } else {
-            echo "文件不是一个图像.";
-            $uploadOk = 0;
+    printf('<pre>%s</pre>', print_r($_POST, true));
+
+    /**
+     * 文件上传 错误原因 官方文档
+     * https://www.php.net/manual/zh/features.file-upload.errors.php
+     * */
+    $error = $_FILES['fileToUpload']['error'];
+    if($error > 0) {
+
+        switch($error) {
+            case 1:
+                $tips = '上传的文件超过了 php.ini 中 upload_max_filesize 选项限制的值';
+                break;
+            case 4:
+                $tips = '没有文件被上传';
+                break;
+
         }
+        echo "<p>$tips</p>";
+
+    } else {
+        echo '<span style="color:green;font-weight:500;">文件上传成功</span>';
+
     }
 
     // 检查文件是否已存在
